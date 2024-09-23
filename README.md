@@ -8,5 +8,8 @@
 ```
 ___
 Не бойтесь спрашивать меня о чем либо в телеграме.
-
-![Static Badge](https://img.shields.io/badge/:badgeContent?style=flat-square&logo=Telegram&logoColor=White&label=Telepram%20&labelColor=White&color=%2326A5E4&link=https%3A%2F%2Ft.me%2FDaniel1236n)
+<div id="badges">
+  <a href="https://t.me/Daniel1236n">
+   <img https://img.shields.io/badge/:badgeContent?style=flat-square&logo=Telegram&logoColor=White&label=Telepram%20&labelColor=White&color=%2326A5E4>
+  </a>
+</div>
