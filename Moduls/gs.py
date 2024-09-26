@@ -51,19 +51,6 @@ class deff2(loader.Module):
         )
         return
 
-    async def анимкcmd(self, message):
-        """Э, анимешник баля [гс]"""
-
-        reply = await message.get_reply_message()
-        await message.delete()
-        await message.client.send_file(
-            message.to_id,
-            "https://t.me/ajskalqpwoe/12",
-            voice_note=True,
-            reply_to=reply.id if reply else None,
-        )
-        return
-
     async def овцаcmd(self, message):
         """ты там соли перекурила? [гс]"""
 
@@ -129,7 +116,7 @@ class deff2(loader.Module):
         )
         return
      
-    async def 2метраcmd(self, message):
+    async def дваметраcmd(self, message):
         """я 2 метра ростом [гс]"""
 
         reply = await message.get_reply_message()
