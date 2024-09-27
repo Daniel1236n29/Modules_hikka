@@ -6,6 +6,15 @@
 ```
 .dlm https://raw.githubusercontent.com/Daniel1236n29/Modules_hikka/main/{название модуля}
 ```
+И вы можете добавить мой репозиторий:
+```
+.addrepo https://raw.githubusercontent.com/Daniel1236n29/Modules_hikka/main
+```
+После этого вы сможете установить модуль:
+```
+.dlm {название модуля}
+```
+
 ___
 Не бойтесь спрашивать меня о чем либо в телеграме.
 <div id="badges">
