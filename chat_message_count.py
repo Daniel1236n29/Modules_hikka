@@ -1,5 +1,5 @@
 __version__ = (2, 0, 1)
-# meta developer: @daniilmods
+# meta developer: @stupid_alien_mods
 #----------------------------------------------------------------------------
 from .. import loader, utils
 import hikkatl
