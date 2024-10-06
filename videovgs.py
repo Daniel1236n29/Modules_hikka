@@ -33,8 +33,8 @@ class VideoToVoiceMod(loader.Module):
     """Модуль для конвертации видео в голосовое сообщение"""
     strings = {"name": "VideoToVoice"}
 
-    async def videovoicecmd(self, message):
-        """Используй .videovoice для конвертации видео в голосовое сообщение"""
+    async def vtvcmd(self, message):
+        """Конвертация видео в голосовое сообщение"""
         reply = await message.get_reply_message()
 
         if not reply or not reply.media:
