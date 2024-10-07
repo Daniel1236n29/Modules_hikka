@@ -28,12 +28,10 @@ from .. import loader, utils
 import aiohttp
 import json
 
+@loader.tds
 class CryptoCurrencyMod(loader.Module):
     """Модуль для отображения текущего курса криптовалют"""
     strings = {"name": "CryptoCurrency"}
-
-    async def client_ready(self, client, db):
-        self.client = client
 
     async def get_exchange_rates(self):
         async with aiohttp.ClientSession() as session:
@@ -48,8 +46,7 @@ class CryptoCurrencyMod(loader.Module):
         """Показывает текущий курс криптовалюты в рублях, долларах и евро"""
         query = utils.get_args_raw(message)
         if not query:
-            await message.edit("Пожалуйста, укажите тикер или название криптовалюты.")
-            return
+            return await utils.answer(message, "Пожалуйста, укажите тикер или название криптовалюты.")
 
         async with aiohttp.ClientSession() as session:
             async with session.get("https://api.coinlore.net/api/tickers/?start=0&limit=100") as resp:
@@ -58,8 +55,7 @@ class CryptoCurrencyMod(loader.Module):
         coin = next((item for item in data['data'] if query.lower() in item['name'].lower() or query.lower() in item['symbol'].lower()), None)
 
         if not coin:
-            await message.edit(f"Криптовалюта '{query}' не найдена.")
-            return
+            return await utils.answer(message, f"Криптовалюта '{query}' не найдена.")
 
         price_usd = float(coin['price_usd'])
         usd_rub_rate, usd_eur_rate = await self.get_exchange_rates()
@@ -72,4 +68,4 @@ class CryptoCurrencyMod(loader.Module):
         response += f"RUB: ₽{price_rub:.2f}\n"
         response += f"EUR: €{price_eur:.2f}\n"
 
-        await message.edit(response)
+        await utils.answer(message, response)
