@@ -5,3 +5,4 @@ ichomodule
 slon
 videovgs
 converter
+CryptoCurrency
