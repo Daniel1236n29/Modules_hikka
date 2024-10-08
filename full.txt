@@ -1,6 +1,5 @@
 chat_message_count
 delmsg
-gs
 ichomodule
 slon
 videovgs
