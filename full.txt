@@ -6,3 +6,4 @@ videovgs
 converter
 CryptoCurrency
 gigamod
+neofetch
