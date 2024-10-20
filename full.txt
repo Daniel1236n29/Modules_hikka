@@ -9,3 +9,4 @@ gigamod
 neofetch
 sbeb
 resizeimage
+FarmdMod
