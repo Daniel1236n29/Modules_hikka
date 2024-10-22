@@ -1,4 +1,4 @@
-__version__ = (2, 0, 2)
+__version__ = (2, 0, 3)
 # ———————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————                                                
 #          _____                    _____                    _____                    _____                    _____                    _____  
 #         /\    \                  /\    \                  /\    \                  /\    \                  /\    \                  /\    \ 
@@ -100,11 +100,11 @@ class CMCMod(loader.Module):
         is_private = chat_id == self._me.id or getattr(chat, 'first_name', None) is not None
         chat_title = chat.title if hasattr(chat, 'title') else chat.first_name
 
-        await utils.answer(message, "Начинаю подсчет ваших сообщений... Это может занять некоторое время.")
+        await utils.answer(message, "Начинаю подсчет ваших сообщений...\n Это может занять некоторое время.")
         
         count = await self.get_message_count(chat_id, self._me.id, is_private=is_private)
         
-        await utils.answer(message, f"Вы отправили <b> {count} </b> сообщений за всё время в <u>'{chat_title}'</u>.")
+        await utils.answer(message, f"<emoji document_id=5886412370347036129>👤</emoji> Вы отправили\n <emoji document_id=5886436057091673541>💬</emoji> Сообщений:<b> {count} </b> в <u>'{chat_title}'</u>.")
 
     @loader.unrestricted
     async def usermsgcmd(self, message):
@@ -134,7 +134,7 @@ class CMCMod(loader.Module):
 
         count = await self.get_message_count(chat_id, user.id, is_private=is_private)
         
-        await utils.answer(message, f"Пользователь {username} отправил <b>{count}</b> сообщений за всё время в <u>'{chat_title}'</u>.")
+        await utils.answer(message, f"<emoji document_id=5886412370347036129>👤</emoji> Пользователь {username} отправил\n <emoji document_id=5886436057091673541>💬</emoji> Сообщений: <b>{count}</b> в <u>'{chat_title}'</u>.")
 
     @loader.unrestricted
     async def allmsgcmd(self, message):
@@ -144,7 +144,7 @@ class CMCMod(loader.Module):
         is_private = chat_id == self._me.id or getattr(chat, 'first_name', None) is not None
         chat_title = chat.title if hasattr(chat, 'title') else chat.first_name
 
-        await utils.answer(message, f"Начинаю подсчет сообщений всех пользователей в <u>'{chat_title}'</u>... Это может занять некоторое время.")
+        await utils.answer(message, f"Начинаю подсчет сообщений всех пользователей в <u>'{chat_title}'</u>...\n Это может занять некоторое время.")
 
         participants = await self.get_chat_participants(chat_id)
 
@@ -166,9 +166,9 @@ class CMCMod(loader.Module):
 
         users_message_count.sort(key=lambda x: x[1], reverse=True)
 
-        result_message = f"Статистика сообщений в чате '{chat_title}':\n\n"
+        result_message = f"Статистика сообщений в чате <u>'{chat_title}'</u>:\n\n"
         for username, count in users_message_count:
-            result_message += f"{username}: <b>{count}</b> сообщений\n"
+            result_message += f"<emoji document_id=5886412370347036129>👤</emoji> {username}: <emoji document_id=5886436057091673541>💬</emoji><b>{count}</b> сообщений\n"
 
         await utils.answer(message, result_message)
 
