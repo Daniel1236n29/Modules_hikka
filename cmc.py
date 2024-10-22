@@ -1,4 +1,4 @@
-__version__ = (2, 0, 1)
+__version__ = (2, 0, 2)
 # ———————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————                                                
 #          _____                    _____                    _____                    _____                    _____                    _____  
 #         /\    \                  /\    \                  /\    \                  /\    \                  /\    \                  /\    \ 
@@ -94,7 +94,7 @@ class CMCMod(loader.Module):
 
     @loader.unrestricted
     async def mymsgcmd(self, message):
-        """Подсчитывает все ваши сообщения в чате или ЛС. Использование: .mymsg"""
+        """Подсчитывает все ваши сообщения."""
         chat_id = message.peer_id
         chat = await self._client.get_entity(chat_id)
         is_private = chat_id == self._me.id or getattr(chat, 'first_name', None) is not None
@@ -104,11 +104,11 @@ class CMCMod(loader.Module):
         
         count = await self.get_message_count(chat_id, self._me.id, is_private=is_private)
         
-        await utils.answer(message, f"Вы отправили {count} сообщений за всё время в чате или ЛС '{chat_title}'.")
+        await utils.answer(message, f"Вы отправили <b> {count} </b> сообщений за всё время в <u>'{chat_title}'</u>.")
 
     @loader.unrestricted
     async def usermsgcmd(self, message):
-        """Подсчитывает все сообщения указанного пользователя в чате или ЛС. Использование: .usermsg <реплай или @username>"""
+        """Подсчитывает все сообщения указанного пользователя. Использование: .usermsg <реплай или @username>"""
         args = utils.get_args_raw(message)
         chat_id = message.peer_id
         chat = await self._client.get_entity(chat_id)
@@ -134,17 +134,17 @@ class CMCMod(loader.Module):
 
         count = await self.get_message_count(chat_id, user.id, is_private=is_private)
         
-        await utils.answer(message, f"Пользователь {username} отправил {count} сообщений за всё время в чате или ЛС '{chat_title}'.")
+        await utils.answer(message, f"Пользователь {username} отправил <b>{count}</b> сообщений за всё время в <u>'{chat_title}'</u>.")
 
     @loader.unrestricted
     async def allmsgcmd(self, message):
-        """Подсчитывает сообщения всех участников в чате или ЛС и сортирует от большего к меньшему. Использование: .allmsg"""
+        """Подсчитывает сообщения всех участников."""
         chat_id = message.peer_id
         chat = await self._client.get_entity(chat_id)
         is_private = chat_id == self._me.id or getattr(chat, 'first_name', None) is not None
         chat_title = chat.title if hasattr(chat, 'title') else chat.first_name
 
-        await utils.answer(message, f"Начинаю подсчет сообщений всех пользователей в '{chat_title}'... Это может занять некоторое время.")
+        await utils.answer(message, f"Начинаю подсчет сообщений всех пользователей в <u>'{chat_title}'</u>... Это может занять некоторое время.")
 
         participants = await self.get_chat_participants(chat_id)
 
@@ -168,19 +168,19 @@ class CMCMod(loader.Module):
 
         result_message = f"Статистика сообщений в чате '{chat_title}':\n\n"
         for username, count in users_message_count:
-            result_message += f"{username}: {count} сообщений\n"
+            result_message += f"{username}: <b>{count}</b> сообщений\n"
 
         await utils.answer(message, result_message)
 
     @loader.unrestricted
     async def silentcmd(self, message):
-        """Выводит список пользователей, которые не отправили ни одного сообщения. Использование: .silent"""
+        """Выводит список пользователей, которые не отправили ни одного сообщения."""
         chat_id = message.peer_id
         chat = await self._client.get_entity(chat_id)
         is_private = chat_id == self._me.id or getattr(chat, 'first_name', None) is not None
         chat_title = chat.title if hasattr(chat, 'title') else chat.first_name
 
-        await utils.answer(message, f"Ищу молчунов в '{chat_title}'... Это может занять некоторое время.")
+        await utils.answer(message, f"Ищу молчунов в <u>'{chat_title}'</u>... Это может занять некоторое время.")
 
         participants = await self.get_chat_participants(chat_id)
 
