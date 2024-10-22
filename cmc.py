@@ -1,4 +1,4 @@
-__version__ = (2, 0, 3)
+__version__ = (2, 0, 4)
 # ———————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————                                                
 #          _____                    _____                    _____                    _____                    _____                    _____  
 #         /\    \                  /\    \                  /\    \                  /\    \                  /\    \                  /\    \ 
@@ -104,7 +104,7 @@ class CMCMod(loader.Module):
         
         count = await self.get_message_count(chat_id, self._me.id, is_private=is_private)
         
-        await utils.answer(message, f"<emoji document_id=5886412370347036129>👤</emoji> Вы отправили\n <emoji document_id=5886436057091673541>💬</emoji> Сообщений:<b> {count} </b> в <u>'{chat_title}'</u>.")
+        await utils.answer(message, f"<emoji document_id=5886412370347036129>👤</emoji> Вы отправили:\n<emoji document_id=5886436057091673541>💬</emoji> Сообщений:<b> {count} </b> в <u>'{chat_title}'</u>.")
 
     @loader.unrestricted
     async def usermsgcmd(self, message):
@@ -134,7 +134,7 @@ class CMCMod(loader.Module):
 
         count = await self.get_message_count(chat_id, user.id, is_private=is_private)
         
-        await utils.answer(message, f"<emoji document_id=5886412370347036129>👤</emoji> Пользователь {username} отправил\n <emoji document_id=5886436057091673541>💬</emoji> Сообщений: <b>{count}</b> в <u>'{chat_title}'</u>.")
+        await utils.answer(message, f"<emoji document_id=5886412370347036129>👤</emoji> Пользователь {username} отправил:\n<emoji document_id=5886436057091673541>💬</emoji> Сообщений: <b>{count}</b> в <u>'{chat_title}'</u>.")
 
     @loader.unrestricted
     async def allmsgcmd(self, message):
