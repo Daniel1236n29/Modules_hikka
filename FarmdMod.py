@@ -5,7 +5,7 @@ import asyncio
 
 @loader.tds
 class FarmdMod(loader.Module):
-    """Модуль для увеличения 🍆 в @dickupbot"""
+    """Модуль для увеличения 🍆 в @themetrbot"""
     strings = {"name": "FarmdMod"}
     
     def __init__(self):
@@ -21,7 +21,7 @@ class FarmdMod(loader.Module):
         await message.edit("<b>✅Автоматическая отправка /dick запущена!</b>")
 
         while self.running:
-            await message.client.send_message("@dickupbot", "/dick")
+            await message.client.send_message("@themetrbot", "/dick")
             await asyncio.sleep(3600)
     async def farmdoffcmd(self, message):
         """Отключить автоматическую отправку /dick """
