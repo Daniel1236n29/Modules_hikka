@@ -1,4 +1,4 @@
-# meta developer: @@shrimp_mod
+# meta developer: @shrimp_mod
 from .. import loader, utils
 import asyncio
 
