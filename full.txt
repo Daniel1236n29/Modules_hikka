@@ -1,7 +1,5 @@
 cmc
 delmsg
-ichomodule
-slon
 videovgs
 converter
 CryptoCurrency
@@ -10,3 +8,4 @@ neofetch
 sbeb
 resizeimage
 FarmdMod
+tr
