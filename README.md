@@ -18,7 +18,7 @@
 ___
 Не бойтесь спрашивать меня о чем либо в телеграме.
 <div id="badges">
-  <a href="https://t.me/Daniel1236n">
+  <a href="https://t.me/shrimp_mod">
     <img src="https://img.shields.io/badge/Me-telegram-%2326A5E4?style=flat&logo=Telegram&link=https%3A%2F%2Ft.me%2FDaniel1236n" alt="my telegram Badge"/>
   </a>
 <a href="https://t.me/stupid_alien_mods">
