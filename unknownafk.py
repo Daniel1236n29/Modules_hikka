@@ -205,7 +205,7 @@ class UnknownAFKMod(loader.Module):
                 message,
                 f"<b>АФК режим включен</b>\n"
                 f"<emoji document_id=5445161912985724546>✏️</emoji> <b>Причина:</b> <b>{reason}</b>\n"
-                f"<emoji document_id=5287758504117940879>⌚️</emoji> <b>Примерное время возвращения:</b> {return_time or 'не указано'}"
+                f"<emoji document_id=5287758504117940879>⌚️</emoji> <b>Время возвращения:</b> {return_time or 'не указано'}"
             )
 
         await asyncio.sleep(5)
@@ -246,7 +246,7 @@ class UnknownAFKMod(loader.Module):
                     "<emoji document_id=5287613458777387650>😴</emoji> <b>Сейчас я в АФК режиме</b>\n"
                     f"</b><emoji document_id=5287737368583876982>🌀</emoji> Был <b>онлайн</b>: <code>{time}</code> назад\n"
                     f"<emoji document_id=5445161912985724546>✏️</emoji> Причина: <b>{reason}</b>\n"
-                    f"<emoji document_id=5287758504117940879>⌚️</emoji> Примерное время возвращения: {return_time}"
+                    f"<emoji document_id=5287758504117940879>⌚️</emoji> Время возвращения: {return_time}"
                 )
             else:
                 await utils.answer(message, self._afk_custom_text())
