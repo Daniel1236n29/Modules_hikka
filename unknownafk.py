@@ -1,5 +1,6 @@
-__version__ = (3, 5, 5)
 # meta developer: @shrimp_mod
+__version__ = (3, 5, 3)
+
 import asyncio
 import datetime
 import time
@@ -17,6 +18,8 @@ from ..inline.types import InlineCall
 class UnknownAFKMod(loader.Module):
     """Модуль АФК который меняет эмодзи статус (онли Прем) и всякая другая всячина"""
 
+    PERMANENT_BLACKLIST = [777000]
+
     strings = {
         "name": "UnknownAFK",
         "bt_off_afk": "<emoji document_id=5872829476143894491>🚫</emoji> <b>АФК</b> режим <b>отключен</b>!",
@@ -33,6 +36,12 @@ class UnknownAFKMod(loader.Module):
 
     def __init__(self):
         self.config = loader.ModuleConfig(
+            loader.ConfigValue(
+                "blacklist_chats",
+                [],
+                doc=lambda: "Список чатов и пользователей, в которых не будут отправляться АФК уведомления (ID чатов и пользователей)",
+                validator=loader.validators.Series(loader.validators.Integer())
+            ),
             loader.ConfigValue(
                 "timezone",
                 "Europe/Moscow",
@@ -57,12 +66,6 @@ class UnknownAFKMod(loader.Module):
                 "afk_text",
                 "None",
                 doc=lambda: "Кастомный текст афк. Используй {time} для времени, {reason} для причины, {return_time} для времени возвращения и {zone} для часового пояса",
-            ),
-            loader.ConfigValue(
-                "blacklist_chats",
-                [],
-                doc=lambda: "Список чатов, в которых не будут отправляться АФК уведомления (ID чатов)",
-                validator=loader.validators.Series(loader.validators.Integer())
             ),
             loader.ConfigValue(
                 "use_emoji_status",
@@ -94,6 +97,9 @@ class UnknownAFKMod(loader.Module):
         )
 
     async def client_ready(self, client, db):
+        user_blacklist = self.config["blacklist_chats"]
+        combined_blacklist = list(set(self.PERMANENT_BLACKLIST + user_blacklist))
+        self.config["blacklist_chats"] = combined_blacklist
         self._me = await client.get_me()
         self._premium = self._me.premium
         if not self._db.get(__name__, "notified_users"):
@@ -148,34 +154,56 @@ class UnknownAFKMod(loader.Module):
         blacklist_msg = self.strings["blacklist_title"]
         for chat_id in blacklist_chats:
             try:
+                is_permanent = chat_id in self.PERMANENT_BLACKLIST
+                permanent_mark = " 🔒" if is_permanent else ""
+                
                 chat = await message.client.get_entity(chat_id)
                 chat_name = getattr(chat, 'title', str(chat_id))
-                blacklist_msg += f"• <code>{chat_id}</code> - {chat_name}\n"
+                blacklist_msg += f"• <code>{chat_id}</code> - {chat_name}{permanent_mark}\n"
             except Exception:
-                blacklist_msg += f"• <code>{chat_id}</code>\n"
+                blacklist_msg += f"• <code>{chat_id}</code>{' 🔒' if chat_id in self.PERMANENT_BLACKLIST else ''}\n"
         
         await utils.answer(message, blacklist_msg)
 
     @loader.command()
     async def afkadd(self, message):
-        """Добавить текущий чат в черный список"""
+        """Добавить текущий чат или пользователя в черный список"""
         blacklist_chats = self.config["blacklist_chats"]
         
-        current_chat_id = message.chat_id
-        
-        if current_chat_id not in blacklist_chats:
-            blacklist_chats.append(current_chat_id)
-            self.config["blacklist_chats"] = blacklist_chats
-            await utils.answer(message, self.strings["chat_blacklisted"])
-        else:
-            await utils.answer(message, self.strings["chat_already_blacklisted"])
+        try:
+            if message.chat_id in self.PERMANENT_BLACKLIST:
+                await utils.answer(message, "<emoji document_id=5778527486270770928>❌</emoji> <b>Этот чат/пользователь является частью постоянного черного списка!</b>")
+                return
+
+            if message.is_private:
+                user_id = message.chat_id
+                if user_id not in blacklist_chats:
+                    blacklist_chats.append(user_id)
+                    self.config["blacklist_chats"] = blacklist_chats
+                    await utils.answer(message, self.strings["user_blacklisted"])
+                else:
+                    await utils.answer(message, self.strings["user_already_blacklisted"])
+            else:
+                current_chat_id = message.chat_id
+                
+                if current_chat_id not in blacklist_chats:
+                    blacklist_chats.append(current_chat_id)
+                    self.config["blacklist_chats"] = blacklist_chats
+                    await utils.answer(message, self.strings["chat_blacklisted"])
+                else:
+                    await utils.answer(message, self.strings["chat_already_blacklisted"])
+        except Exception as e:
+            await utils.answer(message, f"Ошибка: {str(e)}")
 
     @loader.command()
     async def afkdel(self, message):
         """Удалить текущий чат из черного списка"""
         blacklist_chats = self.config["blacklist_chats"]
-        
         current_chat_id = message.chat_id
+        
+        if current_chat_id in self.PERMANENT_BLACKLIST:
+            await utils.answer(message, "<emoji document_id=5778527486270770928>❌</emoji> <b>Этот чат/пользователь является частью постоянного черного списка и не может быть удален!</b>")
+            return
         
         if current_chat_id in blacklist_chats:
             blacklist_chats.remove(current_chat_id)
@@ -267,7 +295,9 @@ class UnknownAFKMod(loader.Module):
     
         if current_state:
             await self._disable_afk_mode()
-            m = await utils.answer(message, "<emoji document_id=5778527486270770928>❌</emoji> <b>АФК режим выключен</b>")
+            m = await utils.answer(message, self.strings["bt_off_afk"])
+            await asyncio.sleep(5)
+            await m.delete()
         else:
             args = utils.get_args_raw(message)
             reason = args
@@ -350,43 +380,59 @@ class UnknownAFKMod(loader.Module):
     
     @loader.watcher()
     async def watcher(self, message):
+        """Основной обработчик АФК-режима для отправки уведомлений"""
         if not isinstance(message, types.Message):
             return
 
-        blacklist_chats = self._db.get(__name__, "blacklist_chats", [])
+        try:
+            sender = await message.get_sender()
+            if sender and sender.bot:
+                return
+        except Exception:
+            pass
+
+        blacklist_chats = self.config["blacklist_chats"]
+        
         if message.chat_id in blacklist_chats:
             return
 
-        if message.mentioned or getattr(message.to_id, "user_id", None) == self._me.id:
-            afk_state = self._db.get(__name__, "afk", False)
-            if not afk_state:
-                return
+        is_mentioned = message.mentioned
+        is_private_message = getattr(message.to_id, "user_id", None) == self._me.id
 
-            sender_id = message.from_id
-            
-            notified_users = self._db.get(__name__, "notified_users", [])
-            
-            if sender_id in notified_users:
-                return
-                
-            notified_users.append(sender_id)
-            self._db.set(__name__, "notified_users", notified_users)
+        if not (is_mentioned or is_private_message):
+            return
 
-            if not self.config["afk_text"]:
-                now = datetime.datetime.now().replace(microsecond=0)
-                gone = datetime.datetime.fromtimestamp(
-                    self._db.get(__name__, "gone")
-                ).replace(microsecond=0)
-                time = now - gone
-                reason = self._db.get(__name__, "reason")
-                return_time = self._db.get(__name__, "return_time", "не указано")
+        afk_state = self._db.get(__name__, "afk", False)
+        if not afk_state:
+            return
 
-                await utils.answer(
-                    message,
-                    "<emoji document_id=5287613458777387650>😴</emoji> <b>Сейчас я в АФК режиме</b>\n"
-                    f"</b><emoji document_id=5287737368583876982>🌀</emoji> Был <b>онлайн</b>: <code>{time}</code> назад\n"
-                    f"<emoji document_id=5445161912985724546>✏️</emoji> Причина: <b>{reason}</b>\n"
-                    f"<emoji document_id=5287758504117940879>⌚️</emoji> Время возвращения: {return_time}"
-                )
-            else:
-                await utils.answer(message, self._afk_custom_text())
+        sender_id = message.from_id
+        notified_users = self._db.get(__name__, "notified_users", [])
+        
+        if sender_id in notified_users:
+            return
+        
+        notified_users.append(sender_id)
+        self._db.set(__name__, "notified_users", notified_users)
+
+        now = datetime.datetime.now().replace(microsecond=0)
+        gone = datetime.datetime.fromtimestamp(
+            self._db.get(__name__, "gone")
+        ).replace(microsecond=0)
+        time_diff = now - gone
+        reason = self._db.get(__name__, "reason", "Не указана")
+        return_time = self._db.get(__name__, "return_time", "не указано")
+        zone = self.config["timezone"]
+
+        if not self.config["afk_text"]:
+            afk_message = (
+                "<emoji document_id=5287613458777387650>😴</emoji> <b>Сейчас я в АФК режиме</b>\n"
+                f"<emoji document_id=5287737368583876982>🌀</emoji> Был <b>онлайн</b>: <code>{time_diff}</code> назад\n"
+                f"<emoji document_id=5445161912985724546>✏️</emoji> Причина: <b>{reason}</b>\n"
+                f"<emoji document_id=5287758504117940879>⌚️</emoji> Время возвращения: {return_time}\n"
+                f"<emoji document_id=5287758504117940879>🌍</emoji> Часовой пояс: {zone}"
+            )
+        else:
+            afk_message = self._afk_custom_text()
+
+        await utils.answer(message, afk_message)
