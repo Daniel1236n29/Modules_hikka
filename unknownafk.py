@@ -1,5 +1,5 @@
 # meta developer: @shrimp_mod
-__version__ = (3, 5, 3)
+__version__ = (3, 5, 4)
 
 import asyncio
 import datetime
@@ -180,9 +180,9 @@ class UnknownAFKMod(loader.Module):
                 if user_id not in blacklist_chats:
                     blacklist_chats.append(user_id)
                     self.config["blacklist_chats"] = blacklist_chats
-                    await utils.answer(message, self.strings["user_blacklisted"])
+                    await utils.answer(message, "<emoji document_id=5309788666984415888>😊</emoji> <b>Пользователь добавлен в черный список</b>")
                 else:
-                    await utils.answer(message, self.strings["user_already_blacklisted"])
+                    await utils.answer(message, "<emoji document_id=5778527486270770928>❌</emoji> <b>Этот пользователь уже в черном списке</b>")
             else:
                 current_chat_id = message.chat_id
                 
