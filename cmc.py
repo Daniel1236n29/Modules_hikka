@@ -1,4 +1,4 @@
-__version__ = (3, 1, 4)
+__version__ = (3, 1, 0)
 
 # meta developer: @shrimp_mod
 
@@ -29,80 +29,68 @@ class CMCMod(loader.Module):
         }
         
         offset_id = 0
-        limit = 1000
+        limit = 100
 
         while True:
-            try:
-                if is_private:
-                    history = await self._client(hikkatl.functions.messages.GetHistoryRequest(
-                        peer=chat_id,
-                        offset_id=offset_id,
-                        offset_date=None,
-                        add_offset=0,
-                        limit=limit,
-                        max_id=0,
-                        min_id=0,
-                        hash=0
-                    ))
-                    messages = history.messages
-                else:
-                    messages = await self._client(hikkatl.functions.messages.SearchRequest(
-                        peer=chat_id,
-                        q="",
-                        filter=hikkatl.types.InputMessagesFilterEmpty(),
-                        min_date=None,
-                        max_date=None,
-                        offset_id=offset_id,
-                        add_offset=0,
-                        limit=limit,
-                        max_id=0,
-                        min_id=0,
-                        from_id=user_id,
-                        hash=0
-                    ))
-                    messages = messages.messages
+            if is_private:
+                history = await self._client(hikkatl.functions.messages.GetHistoryRequest(
+                    peer=chat_id,
+                    offset_id=offset_id,
+                    offset_date=None,
+                    add_offset=0,
+                    limit=limit,
+                    max_id=0,
+                    min_id=0,
+                    hash=0
+                ))
+                messages = history.messages
+            else:
+                messages = await self._client(hikkatl.functions.messages.SearchRequest(
+                    peer=chat_id,
+                    q="",
+                    filter=hikkatl.types.InputMessagesFilterEmpty(),
+                    min_date=None,
+                    max_date=None,
+                    offset_id=offset_id,
+                    add_offset=0,
+                    limit=limit,
+                    max_id=0,
+                    min_id=0,
+                    from_id=user_id,
+                    hash=0
+                ))
+                messages = messages.messages
 
-                if not messages:
-                    break
-
-                for msg in messages:
-                    try:
-                        msg_user_id = getattr(msg.from_id, 'user_id', msg.from_id)
-                        if msg_user_id == user_id:
-                            stats["total_messages"] += 1
-                            
-                            if msg.media:
-                                if hasattr(msg.media, 'sticker'):
-                                    stats["stickers"] += 1
-                                    stats["total_media"] += 1
-                                elif hasattr(msg.media, 'document'):
-                                    if msg.gif:
-                                        stats["gifs"] += 1
-                                        stats["total_media"] += 1
-                                    elif msg.video:
-                                        stats["videos"] += 1
-                                        stats["total_media"] += 1
-                                    elif msg.voice:
-                                        stats["voice"] += 1
-                                        stats["total_media"] += 1
-                                    elif msg.video_note:
-                                        stats["video_notes"] += 1
-                                        stats["total_media"] += 1
-                                    else:
-                                        stats["documents"] += 1
-                                        stats["total_media"] += 1
-                                elif hasattr(msg.media, 'photo'):
-                                    stats["photos"] += 1
-                                    stats["total_media"] += 1
-                    except Exception:
-                        pass
-
-                if len(messages) < limit:
-                    break
-
-                offset_id = messages[-1].id
-            except Exception:
+            if not messages:
                 break
+
+            for msg in messages:
+                if getattr(msg.from_id, 'user_id', msg.from_id) == user_id:
+                    stats["total_messages"] += 1
+                    
+                    if msg.sticker:
+                        stats["stickers"] += 1
+                        stats["total_media"] += 1
+                    elif msg.gif:
+                        stats["gifs"] += 1
+                        stats["total_media"] += 1
+                    elif msg.photo:
+                        stats["photos"] += 1
+                        stats["total_media"] += 1
+                    elif msg.video:
+                        stats["videos"] += 1
+                        stats["total_media"] += 1
+                    elif msg.voice:
+                        stats["voice"] += 1
+                        stats["total_media"] += 1
+                    elif msg.video_note:
+                        stats["video_notes"] += 1
+                        stats["total_media"] += 1
+                    elif msg.document:
+                        stats["documents"] += 1
+                        stats["total_media"] += 1
+
+            offset_id = messages[-1].id
 
         return stats
 
