@@ -1,4 +1,4 @@
-__version__ = (3, 1, 3)
+__version__ = (3, 1, 4)
 
 # meta developer: @shrimp_mod
 
@@ -14,23 +14,25 @@ class CMCMod(loader.Module):
         self._client = client
         self._me = await client.get_me()
 
-        async def get_message_stats(self, chat_id, user_id, is_private=False):
-            stats = {
-                "total_messages": 0,
-                "stickers": 0,
-                "gifs": 0,
-                "photos": 0,
-                "videos": 0,
-                "voice": 0,
-                "video_notes": 0,
-                "documents": 0,
-                "total_media": 0
-            }
-            
-            offset_id = 0
-            limit = 1000  
-            
-            while True:
+    async def get_message_stats(self, chat_id, user_id, is_private=False):
+        """Подсчет сообщений и медиа для чатов и ЛС"""
+        stats = {
+            "total_messages": 0,
+            "stickers": 0,
+            "gifs": 0,
+            "photos": 0,
+            "videos": 0,
+            "voice": 0,
+            "video_notes": 0,
+            "documents": 0,
+            "total_media": 0
+        }
+        
+        offset_id = 0
+        limit = 1000
+
+        while True:
+            try:
                 if is_private:
                     history = await self._client(hikkatl.functions.messages.GetHistoryRequest(
                         peer=chat_id,
@@ -64,34 +66,45 @@ class CMCMod(loader.Module):
                     break
 
                 for msg in messages:
-                    if getattr(msg.from_id, 'user_id', msg.from_id) == user_id:
-                        stats["total_messages"] += 1
-                        
-                        if msg.sticker:
-                            stats["stickers"] += 1
-                            stats["total_media"] += 1
-                        elif msg.gif:
-                            stats["gifs"] += 1
-                            stats["total_media"] += 1
-                        elif msg.photo:
-                            stats["photos"] += 1
-                            stats["total_media"] += 1
-                        elif msg.video:
-                            stats["videos"] += 1
-                            stats["total_media"] += 1
-                        elif msg.voice:
-                            stats["voice"] += 1
-                            stats["total_media"] += 1
-                        elif msg.video_note:
-                            stats["video_notes"] += 1
-                            stats["total_media"] += 1
-                        elif msg.document:
-                            stats["documents"] += 1
-                            stats["total_media"] += 1
+                    try:
+                        msg_user_id = getattr(msg.from_id, 'user_id', msg.from_id)
+                        if msg_user_id == user_id:
+                            stats["total_messages"] += 1
+                            
+                            if msg.media:
+                                if hasattr(msg.media, 'sticker'):
+                                    stats["stickers"] += 1
+                                    stats["total_media"] += 1
+                                elif hasattr(msg.media, 'document'):
+                                    if msg.gif:
+                                        stats["gifs"] += 1
+                                        stats["total_media"] += 1
+                                    elif msg.video:
+                                        stats["videos"] += 1
+                                        stats["total_media"] += 1
+                                    elif msg.voice:
+                                        stats["voice"] += 1
+                                        stats["total_media"] += 1
+                                    elif msg.video_note:
+                                        stats["video_notes"] += 1
+                                        stats["total_media"] += 1
+                                    else:
+                                        stats["documents"] += 1
+                                        stats["total_media"] += 1
+                                elif hasattr(msg.media, 'photo'):
+                                    stats["photos"] += 1
+                                    stats["total_media"] += 1
+                    except Exception:
+                        pass
+
+                if len(messages) < limit:
+                    break
 
                 offset_id = messages[-1].id
+            except Exception:
+                break
 
-            return stats
+        return stats
 
     async def get_chat_participants(self, chat_id):
         """Получение всех участников чата"""
