@@ -1,4 +1,4 @@
-__version__ = (3, 1, 1)
+__version__ = (3, 1, 2)
 
 # meta developer: @shrimp_mod
 
@@ -29,7 +29,7 @@ class CMCMod(loader.Module):
         }
         
         offset_id = 0
-        limit = 1000
+        limit = 0
 
         while True:
             if is_private:
