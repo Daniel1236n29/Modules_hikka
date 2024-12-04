@@ -1,4 +1,4 @@
-__version__ = (3, 1, 0)
+__version__ = (3, 2, 0)
 
 # meta developer: @shrimp_mod
 
@@ -23,15 +23,34 @@ class CMCMod(loader.Module):
             "photos": 0,
             "videos": 0,
             "voice": 0,
-            "video_notes": 0,
             "documents": 0,
             "total_media": 0
         }
         
+        try:
+            messages_count = await self._client(hikkatl.functions.messages.SearchRequest(
+                peer=chat_id,
+                q="",
+                filter=hikkatl.types.InputMessagesFilterEmpty(),
+                min_date=None,
+                max_date=None,
+                offset_id=0,
+                add_offset=0,
+                limit=0,
+                max_id=0,
+                min_id=0,
+                from_id=user_id,
+                hash=0
+            ))
+            total_messages = messages_count.count
+        except Exception:
+            total_messages = 0
+
         offset_id = 0
         limit = 100
+        collected_messages = 0
 
-        while True:
+        while collected_messages < total_messages:
             if is_private:
                 history = await self._client(hikkatl.functions.messages.GetHistoryRequest(
                     peer=chat_id,
@@ -67,6 +86,7 @@ class CMCMod(loader.Module):
             for msg in messages:
                 if getattr(msg.from_id, 'user_id', msg.from_id) == user_id:
                     stats["total_messages"] += 1
+                    collected_messages += 1
                     
                     if msg.sticker:
                         stats["stickers"] += 1
@@ -83,14 +103,15 @@ class CMCMod(loader.Module):
                     elif msg.voice:
                         stats["voice"] += 1
                         stats["total_media"] += 1
-                    elif msg.video_note:
-                        stats["video_notes"] += 1
-                        stats["total_media"] += 1
                     elif msg.document:
                         stats["documents"] += 1
                         stats["total_media"] += 1
 
+            if not messages:
+                break
             offset_id = messages[-1].id
+
+        stats["total_messages"] = total_messages
 
         return stats
 
@@ -169,7 +190,6 @@ class CMCMod(loader.Module):
             f"└ <emoji document_id=6048390817033228573>📷</emoji> Фото: <b>{stats['photos']}</b>\n"
             f"└ <emoji document_id=5944753741512052670>📷</emoji> Видео: <b>{stats['videos']}</b>\n"
             f"└ <emoji document_id=6030722571412967168>🎤</emoji> Голосовых: <b>{stats['voice']}</b>\n"
-            f"└ <emoji document_id=5944753741512052670>📷</emoji> Кружков: <b>{stats['video_notes']}</b>\n"
             f"└ <emoji document_id=6039630677182254664>📂</emoji> Файлов: <b>{stats['documents']}</b>"
         )
         
@@ -206,13 +226,12 @@ class CMCMod(loader.Module):
         result = (
             f"<emoji document_id=5886412370347036129>👤</emoji> Статистика {username} в <u>'{chat_title}'</u>:\n\n"
             f"<emoji document_id=5886436057091673541>💬</emoji> Всего сообщений: <b>{stats['total_messages']}</b>\n"
-            f"<emoji document_id=5931472654660800739>📊</emoji> Всего медиаконтента: <b>{stats['total_media']}</b>\n\n"
+            f"<emoji document_id=5931472654660800739>📊</emoji> Всего медиаконтента: <b>{stats['total_media']}</b>\n"
             f"└ <emoji document_id=6030466823290360017>🖼</emoji> Стикеров: <b>{stats['stickers']}</b>\n"
             f"└ <emoji document_id=5944777041709633960>🎞</emoji> GIF: <b>{stats['gifs']}</b>\n"
             f"└ <emoji document_id=6048390817033228573>📷</emoji> Фото: <b>{stats['photos']}</b>\n"
             f"└ <emoji document_id=5944753741512052670>📷</emoji> Видео: <b>{stats['videos']}</b>\n"
             f"└ <emoji document_id=6030722571412967168>🎤</emoji> Голосовых: <b>{stats['voice']}</b>\n"
-            f"└ <emoji document_id=5944753741512052670>📷</emoji> Кружков: <b>{stats['video_notes']}</b>\n"
             f"└ <emoji document_id=6039630677182254664>📂</emoji> Файлов: <b>{stats['documents']}</b>"
         )
         
@@ -226,7 +245,7 @@ class CMCMod(loader.Module):
         is_private = chat_id == self._me.id or getattr(chat, 'first_name', None) is not None
         chat_title = getattr(chat, 'title', None) or f"this {'chat' if is_private else 'channel'}"
 
-        await utils.answer(message, f"Начинаю подсчет сообщений всех пользователей в <u>'{chat_title}'</u>...\n Это может занять некоторое время.")
+        await utils.answer(message, f"Начинаю подсчет сообщений всех пользователей в <u>'{chat_title}'</u>...\nЭто может занять некоторое время.")
 
         participants = await self.get_chat_participants(chat_id)
 
@@ -291,5 +310,55 @@ class CMCMod(loader.Module):
             f"<emoji document_id=5886436057091673541>💬</emoji> Всего сообщений: <b>{stats['total_messages']}</b>\n"
             f"└ <emoji document_id=6048390817033228573>📷</emoji> Медиа сообщений: <b>{stats['media_messages']}</b>\n"
         )
+
+        await utils.answer(message, result)
+
+    @loader.unrestricted
+    async def silentcmd(self, message):
+        """Получает список пользователей без сообщений."""
+        chat_id = message.peer_id
+        chat = await self._client.get_entity(chat_id)
+        is_private = chat_id == self._me.id or getattr(chat, 'first_name', None) is not None
+        chat_title = getattr(chat, 'title', None) or f"this {'chat' if is_private else 'channel'}"
+
+        await utils.answer(message, f"Ищу молчунов в <u>'{chat_title}'</u>...")
+        participants = await self._client.get_participants(chat_id, limit=100)
+
+        silent_users = []
+        
+        for user in participants:
+            if user.deleted:
+                continue
+            
+            username = f"@{user.username}" if user.username else f"<a href='tg://user?id={user.id}'>{user.first_name}</a>"
+
+            try:
+                messages = await self._client(hikkatl.functions.messages.SearchRequest(
+                    peer=chat_id,
+                    q="",
+                    filter=hikkatl.types.InputMessagesFilterEmpty(),
+                    min_date=None,
+                    max_date=None,
+                    offset_id=0,
+                    add_offset=0,
+                    limit=1,
+                    max_id=0,
+                    min_id=0,
+                    from_id=user.id,
+                    hash=0
+                ))
+                
+                if messages.count == 0:
+                    silent_users.append(username)
+            except Exception:
+                continue
+
+        if silent_users:
+            result = f"<emoji document_id=5942877472163892475>👥</emoji> Молчуны в <u>'{chat_title}'</u>:\n\n"
+            for user in silent_users:
+                result += f"<emoji document_id=5886412370347036129>👤</emoji> {user}\n"
+            result += f"\n<emoji document_id=5881845358008763202>📝</emoji> Всего молчунов: <b>{len(silent_users)}</b>"
+        else:
+            result = f"<emoji document_id=5881845358008763202>📝</emoji> Нет молчунов в <u>'{chat_title}'</u>!"
 
         await utils.answer(message, result)
