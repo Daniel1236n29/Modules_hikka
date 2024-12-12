@@ -10,3 +10,4 @@ resizeimage
 FarmdMod
 tr
 unknownafk
+broafcast
