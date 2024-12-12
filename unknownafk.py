@@ -1,5 +1,5 @@
 # meta developer: @shrimp_mod
-__version__ = (3, 5, 4)
+__version__ = (3, 5, 5)
 
 import asyncio
 import datetime
@@ -98,8 +98,15 @@ class UnknownAFKMod(loader.Module):
 
     async def client_ready(self, client, db):
         user_blacklist = self.config["blacklist_chats"]
-        combined_blacklist = list(set(self.PERMANENT_BLACKLIST + user_blacklist))
+        filtered_user_blacklist = [
+            chat_id for chat_id in user_blacklist 
+            if chat_id not in self.PERMANENT_BLACKLIST
+        ]
+        self.config["blacklist_chats"] = filtered_user_blacklist
+        
+        combined_blacklist = list(set(self.PERMANENT_BLACKLIST + self.config["blacklist_chats"]))
         self.config["blacklist_chats"] = combined_blacklist
+        
         self._me = await client.get_me()
         self._premium = self._me.premium
         if not self._db.get(__name__, "notified_users"):
@@ -145,7 +152,10 @@ class UnknownAFKMod(loader.Module):
     @loader.command()
     async def afklist(self, message):
         """Показать черный список чатов"""
-        blacklist_chats = self.config["blacklist_chats"]
+        blacklist_chats = [
+            chat_id for chat_id in self.config["blacklist_chats"] 
+            if chat_id not in self.PERMANENT_BLACKLIST
+        ]
         
         if not blacklist_chats:
             await utils.answer(message, self.strings["blacklist_empty"])
@@ -154,16 +164,14 @@ class UnknownAFKMod(loader.Module):
         blacklist_msg = self.strings["blacklist_title"]
         for chat_id in blacklist_chats:
             try:
-                is_permanent = chat_id in self.PERMANENT_BLACKLIST
-                permanent_mark = " 🔒" if is_permanent else ""
-                
                 chat = await message.client.get_entity(chat_id)
                 chat_name = getattr(chat, 'title', str(chat_id))
-                blacklist_msg += f"• <code>{chat_id}</code> - {chat_name}{permanent_mark}\n"
+                blacklist_msg += f"• <code>{chat_id}</code> - {chat_name}\n"
             except Exception:
-                blacklist_msg += f"• <code>{chat_id}</code>{' 🔒' if chat_id in self.PERMANENT_BLACKLIST else ''}\n"
+                blacklist_msg += f"• <code>{chat_id}</code>\n"
         
         await utils.answer(message, blacklist_msg)
+
 
     @loader.command()
     async def afkadd(self, message):
