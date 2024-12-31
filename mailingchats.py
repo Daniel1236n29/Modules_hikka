@@ -8,7 +8,7 @@ import asyncio
 
 @loader.tds
 class MailingChatsMod(loader.Module):
-    """Модуль для управления списком чатов для рассылки"""
+    """Модуль для рассылки по чатам"""
     strings = {
         "name": "Mailing Chats",
         "chat_added": "✅ Чат {} ({}) добавлен в список рассылки",
