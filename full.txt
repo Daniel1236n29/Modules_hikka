@@ -11,3 +11,4 @@ FarmdMod
 tr
 unknownafk
 broafcast
+mailingchats
