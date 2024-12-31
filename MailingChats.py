@@ -1,4 +1,4 @@
-__version__ = (1, 2, 0)
+__version__ = (1, 2, 1)
 
 # meta developer: @shrimp_mod
 
@@ -16,14 +16,23 @@ class MailingChatsMod(loader.Module):
         "no_chats": "📋 Список чатов для рассылки пуст",
         "chats_list": "📝 Текущие чаты для рассылки:\n{}",
         "chat_already_exists": "⚠️ Чат {} ({}) уже есть в списке рассылки",
-        "chat_not_found": "❌ Чат {} ({}) не найден в списке рассылки"
+        "chat_not_found": "❌ Чат {} ({}) не найден в списке рассылки",
+        "delay_updated": "⚙️ Задержка между отправкой сообщений установлена на {} секунд"
     }
 
     def __init__(self):
         self.config = loader.ModuleConfig(
-            "mailing_chats",
-            [],
-            "Список чатов для рассылки"
+            loader.ConfigValue(
+                "mailing_chats",
+                [],
+                doc=lambda: "Список чатов для рассылки",
+                validator=loader.validators.Series(loader.validators.Integer())
+            ),
+            loader.ConfigValue(
+                "delay_between_sends",
+                2,
+                doc=lambda: "Задержка между отправкой сообщений в секундах"
+            )
         )
 
     async def get_chat_name(self, message):
@@ -51,7 +60,10 @@ class MailingChatsMod(loader.Module):
             await status_message.delete()
             return
 
-        self.config['mailing_chats'].append(chat_id)
+        chats_list = list(self.config['mailing_chats'])
+        chats_list.append(chat_id)
+        self.config['mailing_chats'] = chats_list
+
         status_message = await message.edit(self.strings["chat_added"].format(chat_id, chat_name))
         await asyncio.sleep(3)
         await status_message.delete()
@@ -68,10 +80,30 @@ class MailingChatsMod(loader.Module):
             await status_message.delete()
             return
 
-        self.config['mailing_chats'].remove(chat_id)
+        chats_list = list(self.config['mailing_chats'])
+        chats_list.remove(chat_id)
+        self.config['mailing_chats'] = chats_list
+
         status_message = await message.edit(self.strings["chat_removed"].format(chat_id, chat_name))
         await asyncio.sleep(3)
         await status_message.delete()
+
+    @loader.command()
+    async def setdelay(self, message):
+        """Установить задержку между отправкой сообщений (в секундах)"""
+        args = utils.get_args_raw(message)
+        try:
+            delay = float(args)
+            if delay < 0:
+                raise ValueError
+            self.config['delay_between_sends'] = delay
+            status_message = await message.edit(self.strings["delay_updated"].format(delay))
+            await asyncio.sleep(3)
+            await status_message.delete()
+        except (ValueError, TypeError):
+            status_message = await message.edit("❌ Пожалуйста, введите положительное число")
+            await asyncio.sleep(3)
+            await status_message.delete()
 
     @loader.command()
     async def listchatr(self, message):
@@ -125,6 +157,8 @@ class MailingChatsMod(loader.Module):
             try:
                 await message.client.send_message(chat, text)
                 success_count += 1
+                if success_count < len(chats):
+                    await asyncio.sleep(self.config['delay_between_sends'])
             except Exception as e:
                 logging.error(f"Ошибка при отправке в чат {chat}: {e}")
 
